@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>闲鱼爆款监控</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">闲</span>
+        <div>
+          <strong>爆款监控</strong>
+          <small>内部选品工具</small>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-section="dashboard">
+          <span class="icon">▦</span>
+          首页看板
+        </button>
+        <button class="nav-item" data-section="tableSection">
+          <span class="icon">▤</span>
+          商品列表
+        </button>
+        <button class="nav-item" data-open-add>
+          <span class="icon">＋</span>
+          添加商品
+        </button>
+        <button class="nav-item" data-open-crawler>
+          <span class="icon">⚙</span>
+          采集设置
+        </button>
+        <button class="nav-item" data-section="reportSection">
+          <span class="icon">▥</span>
+          数据报表
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <span>数据更新时间</span>
+        <strong id="sidebarUpdatedAt">-</strong>
+        <button class="ghost-button" id="refreshFromSidebar">刷新数据</button>
+      </div>
+    </aside>
+
+    <main class="app-shell">
+      <section id="fileModeWarning" class="warning-banner" hidden>
+        当前是直接打开文件模式，不能真实采集。请双击桌面文件夹里的“打开监控网站.command”，或访问 http://localhost:4173/index.html。
+      </section>
+      <header class="topbar">
+        <div>
+          <h1>闲鱼爆款监控</h1>
+          <p>监控商品热度变化，辅助选品决策</p>
+        </div>
+        <div class="actions">
+          <label class="date-picker">
+            <span>▣</span>
+            <input type="date" id="currentDate" />
+          </label>
+          <button class="secondary-button" id="exportCsv">导出 CSV</button>
+          <button class="secondary-button" data-open-crawler>采集设置</button>
+          <button class="primary-button" id="runUpdate">立即更新</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="stats-grid">
+        <article class="metric-card blue">
+          <div class="metric-icon">▣</div>
+          <div>
+            <span>监控商品数</span>
+            <strong id="metricTotal">0</strong>
+            <small id="metricTotalChange">较昨日 +0</small>
+          </div>
+        </article>
+        <article class="metric-card green">
+          <div class="metric-icon">✓</div>
+          <div>
+            <span>今日更新成功</span>
+            <strong id="metricSuccess">0</strong>
+            <small id="metricSuccessRate">成功率 0%</small>
+          </div>
+        </article>
+        <article class="metric-card red">
+          <div class="metric-icon">!</div>
+          <div>
+            <span>今日抓取失败</span>
+            <strong id="metricFailed">0</strong>
+            <small id="metricFailedDelta">较昨日 +0</small>
+          </div>
+        </article>
+        <article class="metric-card purple">
+          <div class="metric-icon">△</div>
+          <div>
+            <span>疑似下架</span>
+            <strong id="metricRemoved">0</strong>
+            <small id="metricRemovedDelta">较昨日 +0</small>
+          </div>
+        </article>
+      </section>
+
+      <section class="toolbar">
+        <div class="search-wrap">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="搜索标题、账号、备注" />
+        </div>
+        <div class="segmented" id="statusFilters">
+          <button class="active" data-status="all">全部</button>
+          <button data-status="normal">正常</button>
+          <button data-status="failed">失败</button>
+          <button data-status="removed">下架</button>
+          <button data-status="hot">热度上升</button>
+        </div>
+        <button class="danger-button" id="deleteSelected">删除选中</button>
+        <button class="secondary-button" data-open-add>上传链接</button>
+      </section>
+
+      <section id="tableSection" class="table-card">
+        <div class="table-head">
+          <label class="check-all">
+            <input type="checkbox" id="checkAll" />
+          </label>
+          <span>商品标题</span>
+          <span>账号名称</span>
+          <span>当前价格</span>
+          <span>当前想要</span>
+          <span>当前浏览</span>
+          <span>今日新增想要</span>
+          <span>今日新增浏览</span>
+          <span>是否改价</span>
+          <span>是否改标题</span>
+          <span>是否改文案</span>
+          <span>状态</span>
+          <span>备注</span>
+          <span>操作</span>
+        </div>
+        <div id="productRows" class="table-body"></div>
+        <div class="table-foot">
+          <span id="rowCount">共 0 条</span>
+          <div class="pager">
+            <button disabled>‹</button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button>›</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="detailSection" class="detail-grid">
+        <article class="detail-card current-detail">
+          <div class="section-title">
+            <h2>商品详情</h2>
+            <span id="detailId">ID: -</span>
+          </div>
+          <dl class="detail-list">
+            <div>
+              <dt>商品当前标题</dt>
+              <dd id="detailTitle">选择一个商品查看详情</dd>
+            </div>
+            <div>
+              <dt>商品链接</dt>
+              <dd><a id="detailLink" href="#" target="_blank" rel="noreferrer">-</a></dd>
+            </div>
+            <div>
+              <dt>账号名称</dt>
+              <dd id="detailAccount">-</dd>
+            </div>
+          </dl>
+          <div class="detail-metrics">
+            <div>
+              <span>当前价格</span>
+              <strong id="detailPrice">-</strong>
+              <small id="detailPriceFlag">-</small>
+            </div>
+            <div>
+              <span>当前想要</span>
+              <strong id="detailWants">-</strong>
+              <small id="detailWantsFlag">-</small>
+            </div>
+            <div>
+              <span>当前浏览</span>
+              <strong id="detailViews">-</strong>
+              <small id="detailViewsFlag">-</small>
+            </div>
+          </div>
+          <div class="copy-block">
+            <h3>当前文案</h3>
+            <p id="detailCopy">-</p>
+          </div>
+        </article>
+
+        <article class="chart-card">
+          <div class="section-title">
+            <h2>历史价格变化</h2>
+            <select id="priceRange">
+              <option>7天</option>
+              <option>14天</option>
+              <option>30天</option>
+            </select>
+          </div>
+          <canvas id="priceChart" width="360" height="220"></canvas>
+          <strong class="chart-callout" id="priceCallout">-</strong>
+        </article>
+
+        <article class="chart-card">
+          <div class="section-title">
+            <h2>历史想要变化</h2>
+            <select id="wantRange">
+              <option>7天</option>
+              <option>14天</option>
+              <option>30天</option>
+            </select>
+          </div>
+          <canvas id="wantChart" width="360" height="220"></canvas>
+          <strong class="chart-callout green-text" id="wantCallout">-</strong>
+        </article>
+
+        <article class="chart-card">
+          <div class="section-title">
+            <h2>历史浏览变化</h2>
+            <select id="viewRange">
+              <option>7天</option>
+              <option>14天</option>
+              <option>30天</option>
+            </select>
+          </div>
+          <canvas id="viewChart" width="360" height="220"></canvas>
+          <strong class="chart-callout blue-text" id="viewCallout">-</strong>
+        </article>
+      </section>
+
+      <section id="reportSection" class="change-strip">
+        <span>是否降价：<strong id="flagPriceDown">否</strong></span>
+        <span>是否涨价：<strong id="flagPriceUp">否</strong></span>
+        <span>是否修改标题：<strong id="flagTitle">否</strong></span>
+        <span>是否修改文案：<strong id="flagCopy">否</strong></span>
+        <span>今日想要新增：<strong id="flagWant">0</strong></span>
+        <span>今日浏览新增：<strong id="flagView">0</strong></span>
+        <span>是否抓取失败：<strong id="flagFailed">否</strong></span>
+        <span>是否疑似下架：<strong id="flagRemoved">否</strong></span>
+      </section>
+    </main>
+
+    <dialog id="addDialog" class="modal">
+      <form method="dialog">
+        <div class="modal-head">
+          <div>
+            <h2>上传闲鱼商品链接</h2>
+            <p>添加后会调用本地采集服务获取标题、价格、想要、浏览和文案。</p>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+        </div>
+        <textarea id="linkTextarea" placeholder="https://www.goofish.com/item?id=..."></textarea>
+        <div class="file-row">
+          <input id="linkFile" type="file" accept=".txt,.csv" />
+          <input id="defaultNote" type="text" placeholder="默认备注，例如：重点监控 / 竞品 / 待验证" />
+        </div>
+        <menu class="modal-actions">
+          <button class="secondary-button" value="cancel">取消</button>
+          <button class="primary-button" id="addLinks" value="default">添加监控</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <dialog id="crawlerDialog" class="modal">
+      <form method="dialog">
+        <div class="modal-head">
+          <div>
+            <h2>采集设置</h2>
+            <p>本地采集服务会访问商品链接。遇到登录或验证时，把你自己浏览器里的闲鱼 Cookie 填在这里。</p>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="关闭">×</button>
+        </div>
+        <label class="field-label" for="crawlerCookie">闲鱼 Cookie</label>
+        <textarea id="crawlerCookie" class="cookie-input" placeholder="可以粘贴 Cookie，也可以粘贴整段 Request Headers，或右键请求 Copy as cURL 后粘贴到这里。"></textarea>
+        <p class="hint-text" id="cookieStatus">Cookie 状态：未保存</p>
+        <p class="hint-text">Cookie 只保存在你这台电脑的浏览器本地。你可以直接粘贴整段 Headers，我会自动提取 Cookie。</p>
+        <menu class="modal-actions">
+          <button class="secondary-button" value="cancel">取消</button>
+          <button class="secondary-button" id="testCrawler" value="default">测试采集服务</button>
+          <button class="primary-button" id="saveCrawler" value="default">保存设置</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

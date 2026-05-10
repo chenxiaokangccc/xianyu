@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: xianyu-hot-monitor
+    runtime: python
+    buildCommand: ""
+    startCommand: "python3 server.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
